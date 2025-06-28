@@ -1,4 +1,4 @@
-package DatastructureAlgorithm;
+package Datastructure;
 import java.util.*;
 
 class Products {
