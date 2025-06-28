@@ -1,0 +1,57 @@
+-- 1. ProcessMonthlyInterest: Apply 1% interest to all savings accounts
+CREATE OR REPLACE PROCEDURE ProcessMonthlyInterest IS
+BEGIN
+    UPDATE Accounts
+    SET Balance = Balance * 1.01
+    WHERE AccountType = 'Savings';
+END;
+/
+
+-- 2. UpdateEmployeeBonus: Add bonus to employees of a specific department
+CREATE OR REPLACE PROCEDURE UpdateEmployeeBonus (
+    dept_id IN NUMBER,
+    bonus_percent IN NUMBER  -- Pass 0.10 for 10%
+) IS
+BEGIN
+    UPDATE Employees
+    SET Salary = Salary + (Salary * bonus_percent)
+    WHERE DepartmentID = dept_id;
+END;
+/
+
+-- 3. TransferFunds: Move funds between accounts if sufficient balance exists
+CREATE OR REPLACE PROCEDURE TransferFunds (
+    fromAccount IN NUMBER,
+    toAccount IN NUMBER,
+    amount IN NUMBER
+) IS
+    fromBalance NUMBER;
+BEGIN
+    -- Get current balance of the source account
+    SELECT Balance INTO fromBalance
+    FROM Accounts
+    WHERE AccountID = fromAccount
+    FOR UPDATE;
+
+    -- Check if sufficient funds are available
+    IF fromBalance >= amount THEN
+        -- Deduct from source
+        UPDATE Accounts
+        SET Balance = Balance - amount
+        WHERE AccountID = fromAccount;
+
+        -- Add to destination
+        UPDATE Accounts
+        SET Balance = Balance + amount
+        WHERE AccountID = toAccount;
+    ELSE
+        RAISE_APPLICATION_ERROR(-20001, 'Insufficient balance in source account');
+    END IF;
+END;
+/
+CREATE OR REPLACE PROCEDURE GetAllCustomers AS
+BEGIN
+  FOR customer_rec IN (SELECT * FROM Customers) LOOP
+    DBMS_OUTPUT.PUT_LINE(customer_rec.CustomerName);
+  END LOOP;
+END;
