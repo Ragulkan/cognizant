@@ -1,0 +1,51 @@
+DECLARE
+    -- Cursor for Scenario 1: Customers over 60 with loans
+    CURSOR senior_customers IS
+        SELECT c.customer_id, l.loan_id, l.interest_rate
+        FROM customers c
+        JOIN loans l ON c.customer_id = l.customer_id
+        WHERE c.age > 60;
+
+    -- Cursor for Scenario 2: Customers with balance over 10,000
+    CURSOR vip_candidates IS
+        SELECT customer_id
+        FROM customers
+        WHERE balance > 10000;
+
+    -- Cursor for Scenario 3: Loans due in the next 30 days
+    CURSOR due_loans IS
+        SELECT l.loan_id, c.customer_id, c.name, l.due_date
+        FROM loans l
+        JOIN customers c ON l.customer_id = c.customer_id
+        WHERE l.due_date BETWEEN SYSDATE AND SYSDATE + 30;
+BEGIN
+    -- Scenario 1: Apply 1% interest discount for customers over 60
+    FOR rec1 IN senior_customers LOOP
+        UPDATE loans
+        SET interest_rate = interest_rate - 0.01
+        WHERE loan_id = rec1.loan_id;
+
+        DBMS_OUTPUT.PUT_LINE('1% interest discount applied to customer ID ' || rec1.customer_id);
+    END LOOP;
+
+    -- Scenario 2: Promote to VIP if balance > 10,000
+    FOR rec2 IN vip_candidates LOOP
+        UPDATE customers
+        SET isvip = 'TRUE' -- Change to TRUE if isvip is a BOOLEAN
+        WHERE customer_id = rec2.customer_id;
+
+        DBMS_OUTPUT.PUT_LINE('Customer ID ' || rec2.customer_id || ' promoted to VIP.');
+    END LOOP;
+
+    -- Scenario 3: Print reminders for loans due within 30 days
+    FOR rec3 IN due_loans LOOP
+        DBMS_OUTPUT.PUT_LINE('Reminder: Loan ID ' || rec3.loan_id ||
+                             ' for customer ' || rec3.name ||
+                             ' (ID: ' || rec3.customer_id ||
+                             ') is due on ' || TO_CHAR(rec3.due_date, 'DD-MON-YYYY'));
+    END LOOP;
+
+    COMMIT;
+END;
+
+
